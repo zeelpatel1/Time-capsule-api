@@ -15,20 +15,20 @@ export const createMessage = async (req, res) => {
 
     const deliveryDate = new Date(deliver_at)
 
-    if (isNaN(deliveryDate)) {
-      return res.status(400).json({ message: "Invalid date format" })
-    }
+if (isNaN(deliveryDate)) {
+  return res.status(400).json({ message: "Invalid date format" })
+}
 
-    if (deliveryDate <= new Date()) {
-      return res.status(400).json({ message: "deliver_at must be in the future" })
-    }
+if (deliveryDate <= new Date()) {
+  return res.status(400).json({ message: "deliver_at must be in the future" })
+}
 
     // Store exactly what the user sends (no UTC conversion)
     const result = await pool.query(
       `INSERT INTO messages (user_id, recipient_email, message, deliver_at)
        VALUES ($1,$2,$3,$4)
        RETURNING *`,
-      [userId, recipient_email, message, deliver_at]
+      [userId, recipient_email, message, deliveryDate.toISOString()]
     )
 
     res.status(201).json({

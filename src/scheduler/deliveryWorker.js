@@ -7,30 +7,30 @@ const LOG_FILE = "delivery.log"
 const deliverMessages = async () => {
   try {
 
+    // Update and fetch messages that should be delivered
     const result = await pool.query(`
-      SELECT *
-      FROM messages
-      WHERE status='PENDING'
+      UPDATE messages
+      SET status = 'DELIVERED',
+          delivered_at = CURRENT_TIMESTAMP
+      WHERE status = 'PENDING'
       AND deliver_at <= CURRENT_TIMESTAMP
+      RETURNING *
     `)
 
-    const messages = result.rows
+    const deliveredMessages = result.rows
 
-    for (const msg of messages) {
+    if (deliveredMessages.length === 0) {
+      return
+    }
 
-      await pool.query(
-        `UPDATE messages
-         SET status='DELIVERED',
-             delivered_at=CURRENT_TIMESTAMP
-         WHERE id=$1`,
-        [msg.id]
-      )
+    for (const msg of deliveredMessages) {
 
       const log = `[${new Date().toLocaleString()}] Delivered message ${msg.id} to ${msg.recipient_email}\n`
 
       await fs.appendFile(LOG_FILE, log)
 
       console.log(log)
+
     }
 
   } catch (error) {
