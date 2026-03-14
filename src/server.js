@@ -4,7 +4,7 @@ import express from "express"
 import authRoutes from "./routes/authRoutes.js"
 import messageRoutes from "./routes/messageRoutes.js"
 import { startDeliveryWorker } from "./scheduler/deliveryWorker.js"
-
+import pool from "./db/db.js"
 
 dotenv.config()
 
@@ -15,7 +15,7 @@ app.use(express.json())
 app.use("/auth", authRoutes)
 app.use("/messages", messageRoutes)
 
-app.get("/init-db", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
 
     await pool.query(`
