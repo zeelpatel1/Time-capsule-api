@@ -14,6 +14,22 @@ app.use(express.json())
 
 app.use("/auth", authRoutes)
 app.use("/messages", messageRoutes)
+
+app.get("/init-db", async (req, res) => {
+
+  await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`)
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    )
+  `)
+
+  res.send("Database initialized")
+})
+
 startDeliveryWorker()
 
 const PORT = process.env.PORT || 5000
