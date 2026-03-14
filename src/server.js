@@ -16,18 +16,36 @@ app.use("/auth", authRoutes)
 app.use("/messages", messageRoutes)
 
 app.get("/init-db", async (req, res) => {
+  try {
 
-  await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
-    )
-  `)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        recipient_email TEXT NOT NULL,
+        message TEXT CHECK (length(message) <= 500),
+        deliver_at TIMESTAMP NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        delivered_at TIMESTAMP
+      )
+    `)
 
-  res.send("Database initialized")
+    res.send("Database initialized successfully")
+
+  } catch (err) {
+    console.error(err)
+    res.status(500).send(err.message)
+  }
 })
 
 startDeliveryWorker()
